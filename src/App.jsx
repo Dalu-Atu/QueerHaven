@@ -315,6 +315,99 @@ const FAQItem = ({ question, answer }) => {
     </div>
   );
 };
+// "AKfycbypSqyi_SyrzQ-VlwouJT_uACElhRUjUJhrQXNrfu-wbYer0vnOLlsL88net7UEvc8";
+function WaitlistForm() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle, loading, success, error
+
+  const GOOGLE_SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbypSqyi_SyrzQ-VlwouJT_uACElhRUjUJhrQXNrfu-wbYer0vnOLlsL88net7UEvc8/exec";
+
+  const handleJoin = async (e) => {
+    e.preventDefault();
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
+    setStatus("loading");
+
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors", // Required for Google Apps Script
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          page: window.location.href,
+        }),
+      });
+
+      // With no-cors, we can't read response but submission works
+      setStatus("success");
+      setEmail("");
+
+      // Reset after 3 seconds
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch (error) {
+      console.error("Submission error:", error);
+      setStatus("error");
+      alert("Something went wrong. Please try again.");
+      setTimeout(() => setStatus("idle"), 2000);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleJoin}
+      className="flex flex-col sm:flex-row gap-3 max-w-md mb-8"
+    >
+      <div className="relative flex-1">
+        <input
+          type="email"
+          placeholder="enter@email.com"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-white placeholder:text-slate-600"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={status === "success"}
+          required
+        />
+        {status === "success" && (
+          <CheckCircle2
+            className="absolute right-4 top-4 text-emerald-400"
+            size={20}
+          />
+        )}
+      </div>
+      <button
+        type="submit"
+        disabled={status !== "idle"}
+        className={`px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+          status === "success"
+            ? "bg-emerald-500 text-white"
+            : "bg-white text-slate-950 hover:bg-purple-50 disabled:opacity-50"
+        }`}
+      >
+        {status === "loading" ? (
+          <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+        ) : status === "success" ? (
+          "You're in!"
+        ) : (
+          <>
+            Waitlist <ArrowRight size={18} />
+          </>
+        )}
+      </button>
+    </form>
+  );
+}
 
 // --- MAIN APP COMPONENT ---
 const App = () => {
@@ -378,61 +471,18 @@ const App = () => {
               <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse shadow-[0_0_10px_#a855f7]" />
               Live Crowdfunding
             </div>
-
             <h1 className="text-4xl md:text-5xl font-extrabold leading-[1.1] mb-8 text-white tracking-tight">
               A Place Our Voices Can{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-white">
                 Be Heard.
               </span>
             </h1>
-
             <p className="text-xl text-slate-400 leading-relaxed mb-10 max-w-lg font-light">
               Mainstream social media wasn't built for us. So we’re building an
               <span className="text-slate-200 font-medium"> Haven </span>
               where you can breathe, be real, and belong on your own terms.
             </p>
-
-            <form
-              onSubmit={handleJoin}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mb-8"
-            >
-              <div className="relative flex-1">
-                <input
-                  type="email"
-                  placeholder="enter@email.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-white placeholder:text-slate-600"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={status === "success"}
-                />
-                {status === "success" && (
-                  <CheckCircle2
-                    className="absolute right-4 top-4 text-emerald-400"
-                    size={20}
-                  />
-                )}
-              </div>
-              <button
-                type="submit"
-                disabled={status !== "idle"}
-                className={`px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                  status === "success"
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white text-slate-950 hover:bg-purple-50"
-                }`}
-              >
-                {status === "loading" ? (
-                  <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                ) : status === "success" ? (
-                  "You're in!"
-                ) : (
-                  <>
-                    Waitlist <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
-            </form>
-
+            <WaitlistForm />
             {/* Social Proof Mini */}
             <div className="flex items-center gap-4 text-sm text-slate-500">
               <div className="flex -space-x-3">
